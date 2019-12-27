@@ -137,3 +137,13 @@ function Matrix_QuickInverse(m)
 	matrix[4][4] = 1;
   return matrix;
 end
+
+function Matrix_TranposeMatrix(m, v)
+  matrix = m
+  for c = 1,4,1 do
+    for r = 1,4,1 do
+      matrix[c][r] = m[r][c];
+    end
+  end
+  return matrix
+end

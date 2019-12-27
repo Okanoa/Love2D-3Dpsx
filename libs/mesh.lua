@@ -120,8 +120,8 @@ function TransformMesh(mesh,output)
       local uvc = {{0,0},{0,0}}
       --print(tablelength(norm[1][1][1]))
       local dp = {}
-
-      local mm = Matrix_MultiplyMatrix(matProj,matWorld)
+      --transpose(invese(modelview))
+      local mm = Matrix_TranposeMatrix(Matrix_QuickInverse(Matrix_MultiplyMatrix(matView,matWorld)))
       for u in pairs(uv[i]) do
 
 
