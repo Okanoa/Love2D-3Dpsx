@@ -138,12 +138,14 @@ function Matrix_QuickInverse(m)
   return matrix;
 end
 
-function Matrix_TranposeMatrix(m, v)
-  matrix = m
+function Matrix_TranposeMatrix(m)
+  matrix = mat4x4();
   for c = 1,4,1 do
     for r = 1,4,1 do
-      matrix[c][r] = m[r][c];
+      matrix[r][c] = m[c][r];
     end
   end
+
+
   return matrix
 end

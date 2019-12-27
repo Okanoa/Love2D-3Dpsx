@@ -132,7 +132,6 @@ function TransformMesh(mesh,output)
         --light_direction = Vector_Normalise(light_direction)
 
         dp[u] = 1--math.max(0, Vector_DotProduct(light_direction, transedn)+.5)
-
         local e = Vector_Normalise(triViewed[u]);
         local n = Vector_Normalise(Matrix_MultiplyVector(mm, norm[i][u]))
 
