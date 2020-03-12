@@ -27,15 +27,23 @@ function love.run()
 		-- Call update and draw
 		if love.update then love.update(dt) end -- will pass 0 if love.timer is disabled
 
+		local min_dt = 1/30 --fp
+	  local next_time = love.timer.getTime()
+		next_time = next_time + min_dt
+
 		if love.graphics and love.graphics.isActive() then
 			love.graphics.origin()
-			love.graphics.clear(love.graphics.getBackgroundColor())
+			--love.graphics.clear(love.graphics.getBackgroundColor())
 
 			if love.draw then love.draw() end
 
 			love.graphics.present()
 		end
 
-		if love.timer then love.timer.sleep(0.00000000000001) end
+		local cur_time = love.timer.getTime()
+		if next_time <= cur_time then
+		  next_time = cur_time
+		end
+		if love.timer then love.timer.sleep(next_time - cur_time) end
 	end
 end

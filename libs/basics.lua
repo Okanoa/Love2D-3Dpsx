@@ -13,6 +13,10 @@ function tableclone(org)
   return {table.unpack(org)}
 end
 
+function math.lerp(a,b,f)
+  return (a * (1 - f)) + (b * f)
+end
+
 function tablelength(T)
   local count = 0
   for _ in pairs(T) do count = count + 1 end
@@ -55,6 +59,10 @@ function color_tween(c1,c2,tween)
     color[3] = (c2[3] - c1[3]) * tween + c1[3]
     color[4] = (c2[4] - c1[4]) * tween + c1[4]
   return color
+end
+
+function point_direction(x1,y1,x2,y2)
+  return math.atan2((y2-y1), (x2-x1))
 end
 
 function deepcopy(orig)
