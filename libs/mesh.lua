@@ -7,54 +7,106 @@ function LoadFromObjFile(sFilename,uvf)
   local verts = {}
   local vtex = {}
   local vnorm = {}
+  local vcolor = {}
   local previousmtl = 0
 
-  for line in love.filesystem.lines(sFilename) do
+  if ext == "obj" then
+    for line in love.filesystem.lines(sFilename) do
 
-    local vv = mysplit(line)
+      local vv = mysplit(line)
 
-    if vv[1] == "v" then
-      table.insert(verts, {x = tonumber(vv[2]), y = tonumber(vv[3]), z = tonumber(vv[4])})
-    end
-
-    if vv[1] == "vt" then
-      table.insert(vtex, {u = tonumber(vv[2]), v = tonumber(vv[3])})
-    end
-
-    if vv[1] == "vn" then
-      table.insert(vnorm, {x = tonumber(vv[2]), y = tonumber(vv[3]), z = tonumber(vv[4])})
-    end
-
-    if vv[1] == "usemtl" then
-      if tonumber(string.match(vv[2],"%d+")) then
-        previousmtl = tonumber(string.match(vv[2],"%d+"))
-      end
-    end
-
-    if vv[1] == "f" then
-
-      poly = {}
-
-      for i = 1,(tablelength(vv)-1)/3,1 do
-        local cc = ((i-1)*3)+2
-
-        vertex = {verts[tonumber(vv[cc])].x, verts[tonumber(vv[cc])].y, verts[tonumber(vv[cc])].z}
-        texture = {vtex[tonumber(vv[cc+1])].u, uvf-vtex[tonumber(vv[cc+1])].v}
-        normal = {vnorm[tonumber(vv[cc+2])].x, vnorm[tonumber(vv[cc+2])].y, vnorm[tonumber(vv[cc+2])].z}
-
-        table.insert(poly,{vertex = vertex, uv = texture, normal = normal})
+      if vv[1] == "v" then
+        table.insert(verts, {x = tonumber(vv[2]), y = tonumber(vv[3]), z = tonumber(vv[4])})
       end
 
-      poly.mtl = previousmtl
-      poly.len = tablelength(poly);
+      if vv[1] == "vt" then
+        table.insert(vtex, {u = tonumber(vv[2]), v = tonumber(vv[3])})
+      end
 
-      --finished format
---{ {vertex={0,0,0}, uv={0,0}, normal={0,0,0}},{vertex={0,0,0}, uv={0,0}, normal={0,0,0}},{vertex={0,0,0}, uv={0,0}, normal={0,0,0}},{vertex={0,0,0}, uv={0,0}, normal={0,0,0}}, mtl=0, len=5}
+      if vv[1] == "vn" then
+        table.insert(vnorm, {x = tonumber(vv[2]), y = tonumber(vv[3]), z = tonumber(vv[4])})
+      end
 
-      table.insert(retmsh,poly)
+      if vv[1] == "usemtl" then
+        if tonumber(string.match(vv[2],"%d+")) then
+          previousmtl = tonumber(string.match(vv[2],"%d+"))
+        end
+      end
+
+      if vv[1] == "f" then
+
+        poly = {}
+
+        for i = 1,(tablelength(vv)-1)/3,1 do
+          local cc = ((i-1)*3)+2
+
+          local vertex = {verts[tonumber(vv[cc])].x, verts[tonumber(vv[cc])].y, verts[tonumber(vv[cc])].z}
+          local texture = {vtex[tonumber(vv[cc+1])].u, uvf-vtex[tonumber(vv[cc+1])].v}
+          local normal = {vnorm[tonumber(vv[cc+2])].x, vnorm[tonumber(vv[cc+2])].y, vnorm[tonumber(vv[cc+2])].z}
+          local color = {1, 1, 1}
+
+          table.insert(poly,{vertex = vertex, uv = texture, normal = normal, color = color})
+        end
+
+        poly.mtl = previousmtl
+        poly.len = tablelength(poly);
+
+        --finished format
+        --{ {vertex={0,0,0}, uv={0,0}, normal={0,0,0}},{vertex={0,0,0}, uv={0,0}, normal={0,0,0}},{vertex={0,0,0}, uv={0,0}, normal={0,0,0}},{vertex={0,0,0}, uv={0,0}, normal={0,0,0}}, mtl=0, len=5}
+
+        table.insert(retmsh,poly)
+      end
+
     end
 
   end
+
+  if ext == "ply" then
+    local plcnter = 0
+    for line in love.filesystem.lines(sFilename) do
+
+      local vv = mysplit(line)
+
+      if vv[1] == "element" and vv[2] == "vertex" then
+        plcnter = tonumber(vv[3])
+      end
+
+      if tablelength(vv) == 11 and plcnter > 0 then
+        table.insert(verts, {x = tonumber(vv[1]), y = tonumber(vv[2]), z = tonumber(vv[3])}) --position
+        table.insert(vtex, {u = tonumber(vv[7]), v = tonumber(vv[8])}) --uv
+        table.insert(vnorm, {x = tonumber(vv[4]), y = tonumber(vv[5]), z = tonumber(vv[6])}) --normal
+        table.insert(vcolor, {r = tonumber(vv[9]/255), g = tonumber(vv[10]/255), b = tonumber(vv[11]/255)}) --color
+
+        plcnter = plcnter-1
+        --print("vc" ,plcnter)
+
+      elseif (tablelength(vv) == 5 or tablelength(vv) == 4) and plcnter <= 0 then --IS A FACE
+        poly = {}
+
+        for i = 1,tonumber(vv[1]),1 do
+          local cc = tonumber(vv[i+1])+1--((i-1)*3)+2
+          --print(cc)
+          --print(verts[cc].z)
+          local vertex = {verts[cc].x, verts[cc].y, verts[cc].z}
+          local texture = {vtex[cc].u, uvf-vtex[cc].v}
+          local normal = {vnorm[cc].x, vnorm[cc].y, vnorm[cc].z}
+          local color = {vcolor[cc].r, vcolor[cc].g, vcolor[cc].b}
+
+          table.insert(poly,{vertex = vertex, uv = texture, normal = normal, color = color})
+        end -- leng check
+
+        poly.mtl = 0
+        poly.len = tablelength(poly);
+        --finished format
+        --{ {vertex={0,0,0}, uv={0,0}, normal={0,0,0}},{vertex={0,0,0}, uv={0,0}, normal={0,0,0}},{vertex={0,0,0}, uv={0,0}, normal={0,0,0}},{vertex={0,0,0}, uv={0,0}, normal={0,0,0}}, mtl=0, len=5}
+
+        table.insert(retmsh,poly)
+      end -- end of face check
+
+    end
+  end --ply
+
+  --end-- who?
 
   return retmsh
 end
@@ -83,15 +135,15 @@ end
 --TransformMesh(mesh,modeltransform,cull,textureposit,reflective)
 function TransformMesh(mesh,texcoords,options)
 
-  local ops = {worldmat = gpu.MATWORLD,viewmat = gpu.MATVIEW,projmat = gpu.MATPROJECTION, depthaddto = 0, cull = true, reflect = false, sorttype = "normal", bm=0}
+  local ops = {worldmat = gpu.MATWORLD,viewmat = gpu.MATVIEW,projmat = gpu.MATPROJECTION, depthsort = 0, cull = true, reflect = false, sorttype = "normal", bm=0}
 
   if options ~= nil then
     if options.worldmatrix~=nil then ops.worldmat = options.worldmatrix end
     if options.viewmatrix~=nil then ops.viewmat = options.viewmatrix end
     if options.projectionmatrix~=nil then ops.projmat = options.projectionmatrix end
-    if options.cull~=nil then ops.cull = false end
-    if options.reflect~=nil then ops.reflect = true end
-    if options.depthadd~=nil then ops.depthaddto = options.depthadd end
+    if options.cull~=nil then ops.cull = options.cull end
+    if options.reflect~=nil then ops.reflect = options.reflect end
+    if options.depthtype~=nil then ops.depthsort = options.depthtype end
     if options.sorttype~=nil then ops.sorttype = options.sorttype end
     if options.blend~=nil then ops.bm = options.blend end
   end
@@ -106,6 +158,7 @@ function TransformMesh(mesh,texcoords,options)
     local polygon = {}
     local uv = {}
     local norm = {}
+    local color = {}
 
     local temp = {} --poly storage
     local alldepth = {}
@@ -115,6 +168,7 @@ function TransformMesh(mesh,texcoords,options)
       polygon[1] = {mmesh[1].vertex,mmesh[2].vertex,mmesh[3].vertex}
       norm[1] = {mmesh[1].normal,mmesh[2].normal,mmesh[3].normal}
       uv[1] = {mmesh[1].uv,mmesh[2].uv,mmesh[3].uv}
+      color[1] = {mmesh[1].color,mmesh[2].color,mmesh[3].color}
     elseif mmesh.len == 5 then -- quad
       polygon[1] = {mmesh[1].vertex,mmesh[2].vertex,mmesh[3].vertex}
       polygon[2] = {mmesh[1].vertex,mmesh[3].vertex,mmesh[4].vertex}
@@ -124,13 +178,20 @@ function TransformMesh(mesh,texcoords,options)
 
       uv[1] = {mmesh[1].uv,mmesh[2].uv,mmesh[3].uv}
       uv[2] = {mmesh[1].uv,mmesh[3].uv,mmesh[4].uv}
+
+      color[1] = {mmesh[1].color,mmesh[2].color,mmesh[3].color}
+      color[2] = {mmesh[1].color,mmesh[3].color,mmesh[4].color}
     end -- end poly if
 
     for i in pairs(polygon) do
       local pid = i
       local utex = {{uv[i][1][1],uv[i][1][2]},{uv[i][2][1],uv[i][2][2]},{uv[i][3][1],uv[i][3][2]}}
       local triTransformed = {{0,0,0},{0,0,0},{0,0,0}}; -- empty transform
-      local vcolor = {{1,1,1,1},{1,1,1,1},{1,1,1,1}}
+      local vcolor = {{color[i][1][1],color[i][1][2],color[i][1][3],1},
+                      {color[i][2][1],color[i][2][2],color[i][2][3],1},
+                      {color[i][3][1],color[i][3][2],color[i][3][3],1}}
+
+      print(vcolor[1][1])
 
       triTransformed[1] = Matrix_MultiplyVector(ops.worldmat, polygon[i][1]) --world space transform
       triTransformed[2] = Matrix_MultiplyVector(ops.worldmat, polygon[i][2])
@@ -140,26 +201,23 @@ function TransformMesh(mesh,texcoords,options)
 
       local pp = {vCamera[1],0,vCamera[3]-3}
       local vdist = {
-        1-(Vector_Distance(pp,triTransformed[1])/3),
-        1-(Vector_Distance(pp,triTransformed[2])/3),
-        1-(Vector_Distance(pp,triTransformed[3])/3)}
+        1-(Vector_Distance(pp,triTransformed[1])/4),
+        1-(Vector_Distance(pp,triTransformed[2])/4),
+        1-(Vector_Distance(pp,triTransformed[3])/4)}
 
 
 
-      local dp = -1;
+      local dp = -1
 
-      if ops.cull then --if cull enabled do cull math otherwise ignore!
+      if ops.cull == true then --if cull enabled do cull math otherwise ignore!
         local normal, line1, line2
         local vCameraRay = Vector_Sub(triTransformed[1], vCamera)
         line1 = Vector_Sub(triTransformed[2],triTransformed[1])
         line2 = Vector_Sub(triTransformed[3],triTransformed[1])
 
-        normal = Vector_CrossProduct(line1, line2)
-        normal = Vector_Normalise(normal)
+        normal = Vector_Normalise( Vector_CrossProduct(line1, line2) )
 
         dp = Vector_DotProduct(normal, vCameraRay)
-      else
-        dp = -1
       end
 
 
@@ -173,9 +231,9 @@ function TransformMesh(mesh,texcoords,options)
 
         local snap = 96
         for c = 1,3,1 do
-          triViewed[c][1] = math.floor(triViewed[c][1]*snap)/snap
-          triViewed[c][2] = math.floor(triViewed[c][2]*snap)/snap
-          triViewed[c][3] = math.floor(triViewed[c][3]*snap)/snap
+          --triViewed[c][1] = math.floor(triViewed[c][1]*snap)/snap
+          --triViewed[c][2] = math.floor(triViewed[c][2]*snap)/snap
+          --triViewed[c][3] = math.floor(triViewed[c][3]*snap)/snap
         end
 
         local dp = {1,1,1}
@@ -185,7 +243,7 @@ function TransformMesh(mesh,texcoords,options)
           local light_direction = Vector_Normalise({-1, 1, 1})
           local lnorm = Matrix_MultiplyVector(modelinverse,norm[i][u])
 
-          dp[u] =1-- math.max(.1, Vector_DotProduct(light_direction,lnorm))--*vdist[u]
+          dp[u] = math.max(.1, Vector_DotProduct(light_direction,lnorm))--*vdist[u]
 
           if ops.reflect then
             local e = Vector_Normalise(triViewed[u]);
@@ -222,7 +280,9 @@ function TransformMesh(mesh,texcoords,options)
           if utex[u][2] == tmax[2] then utex[u][2] = utex[u][2]-offsetuv end
         end
 
-        vcolor = {{1,1,1,dp[1]},{1,1,1,dp[2]},{1,1,1,dp[3]}}
+        vcolor[1][4] = dp[1];
+        vcolor[2][4] = dp[2];
+        vcolor[3][4] = dp[3]
 
         local nClippedTriangles = {1};
         local clipped = {{0,0,0},{0,0,0}}
@@ -287,7 +347,16 @@ function TransformMesh(mesh,texcoords,options)
                lclip = false;
             end
 
-            local depth = (triProjected[1][3] + triProjected[2][3] + triProjected[3][3])/3
+            local depth
+
+            if ops.depthsort == 0 then
+              depth = (triProjected[1][3] + triProjected[2][3] + triProjected[3][3])/3
+            elseif ops.depthsort > 0 then
+              depth = math.max(triProjected[1][3],triProjected[2][3],triProjected[3][3])
+            elseif ops.depthsort < 0 then
+              depth = math.min(triProjected[1][3],triProjected[2][3],triProjected[3][3])
+            end
+
 
             table.insert(alldepth,depth)
             depthcount = depthcount+1
@@ -302,14 +371,34 @@ function TransformMesh(mesh,texcoords,options)
 
     local depthadd = 0
 
-    for j in pairs(alldepth) do
-      depthadd = depthadd+alldepth[j]
+    if ops.depthsort == 0 then
+
+      for j in pairs(alldepth) do
+        depthadd = depthadd+alldepth[j]
+      end
+
+      depthadd = depthadd/depthcount
+
+    elseif ops.depthsort > 0 then
+
+      for j in pairs(alldepth) do
+        depthadd = math.max(depthadd,alldepth[j])
+      end
+
+    elseif ops.depthsort < 0 then
+      depthadd = 1
+
+      for j in pairs(alldepth) do
+        depthadd = math.min(depthadd,alldepth[j])
+      end
+
     end
 
-    depthadd = depthadd/depthcount
+
+
 
     for j in pairs(temp) do
-      temp[j][8] = depthadd+ops.depthaddto
+      temp[j][8] = depthadd
       if temp[j][8] < 1 then
         temp[j][8] = math.floor(temp[j][8]*1000000)+i
         table.insert(gpu.MeshTable, temp[j])

@@ -85,7 +85,7 @@ gpu.DrawScene = function()
 
   love.graphics.setCanvas({gpu.VIDEOBUFFER, depth=false})
 
-    love.graphics.clear(0,0,0,1)
+    love.graphics.clear(1,1,1,1)
     love.graphics.setShader(gpu.ALPHA_VERT)
     love.graphics.setBlendMode("alpha","premultiplied") --DRAW NO BLENDING
     love.graphics.draw(mesh) -- needs a+b a-b a+(b/4) and (a*.5)+(b*.5)

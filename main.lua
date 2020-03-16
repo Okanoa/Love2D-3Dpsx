@@ -11,13 +11,13 @@ require "libs/controller"
 function love.load()
   rWidth = 320;
   rHeight = 240;
-	rZoom = 3;
-  rFullscreen = false;
+	rZoom = 1;
+  rFullscreen = true;
 
   love.window.setTitle("PSX ENGINE v1.0.0")
-	flags = {fullscreen=rFullscreen,vsync=false,display=1}
+	flags = {fullscreen=rFullscreen,vsync=false,display=3}
 	love.window.setMode( rWidth*rZoom, rHeight*rZoom, flags )
-  vCamera = {0,2,5}
+  vCamera = {4.5,2,5}
   vLookDir = {0,0,1}
 
   fYaw = math.rad(180)
@@ -34,18 +34,26 @@ function love.load()
 
   bg = love.graphics.newImage("assets/scroll1.png")
 
-    image = love.graphics.newImage("assets/cortex.png")
-    steve = love.graphics.newImage("assets/melee_env.png")
-    sort = love.graphics.newImage("assets/sort_test.png")
+  dc = 0
+
+
+    image = love.graphics.newImage("assets/scaryguy.png")
+    steve = love.graphics.newImage("assets/sort_test.png")
+    sort = love.graphics.newImage("assets/workzone_tiles4.png")
     grass = love.graphics.newImage("assets/spr_grass_0.png")
-
-
 
     meshs = LoadFromObjFile("assets/cortex.obj")
     meshse = deepcopy(meshs)
     meshs333 = LoadFromObjFile("assets/cortex2.obj")
-    mesh3 = LoadFromObjFile("assets/sort_test.obj")
+    mesh3 = LoadFromObjFile("assets/workzone_int.ply")
     mesh4 = LoadFromObjFile("assets/gras.obj")
+
+    charc = {{
+    {vertex={-1,-1,0}, uv={1,1}, normal={0,0,0}, color={1,1,1}},
+    {vertex={1,-1,0}, uv={0,1}, normal={0,0,0}, color={1,1,1}},
+    {vertex={1,1,0}, uv={0,0}, normal={0,0,0}, color={1,1,1}},
+    {vertex={-1,1,0}, uv={1,0}, normal={0,0,0}, color={1,1,1}},
+    mtl=0, len=5}}
 
   matProj = Matrix_MakeProjection(90, rHeight/rWidth, 0.1, 16)
 
@@ -54,8 +62,8 @@ function love.load()
   tex_sort = gpu.WriteVRAM(sort,320,tex_s.vl,0)
 
   timer = 0;
-  source = love.audio.newSource("super_mario_rpg-barrel_volcano.it", "stream")
-  source:play()
+  source = love.audio.newSource("nowwith.wav", "stream")
+
   ltv = {0,0,1}
 end
 
@@ -69,6 +77,8 @@ timer = timer+1
   if love.keyboard.isDown("down") then
       fPitch = fPitch+.05
   end
+
+
 
   fPitch = fPitch+(input.axiszy*.1)
   fYaw = fYaw+(input.axiszx*.1)
@@ -175,12 +185,12 @@ function love.draw()
 
 
 
-  local cort = Matrix_MultiplyMatrix(Matrix_MakeRotationY(crot),Matrix_MakeTranslation(vCamera[1],0,vCamera[3]-3))
+  local cort = Matrix_MultiplyMatrix(matCameraRot,Matrix_MakeTranslation(vCamera[1],1,vCamera[3]-3))
 
   TweenMesh(meshse,meshs,meshs333,math.abs(math.sin(timer/10)))
 
-  gpu.WriteMesh(meshse,tex_c,{worldmatrix=cort,projectionmatrix=matProj,viewmatrix=matView,depthadd=0})---.01})--cort,true,tex_c,false)
-  gpu.WriteMesh(mesh3,tex_sort,{projectionmatrix=matProj,viewmatrix=matView,cull=false})--Matrix_MakeIdentity(),false,tex_sort,false)
+  gpu.WriteMesh(charc,tex_c,{worldmatrix=cort,projectionmatrix=matProj,viewmatrix=matView,depthtype=-1,cull=false})---.01})--cort,true,tex_c,false)
+  gpu.WriteMesh(mesh3,tex_sort,{worldmatrix=Matrix_MakeRotationX(math.rad(-90)),projectionmatrix=matProj,viewmatrix=matView,depthtype=1,cull=true})--Matrix_MakeIdentity(),false,tex_sort,false)
 
   fpp = love.timer.getFPS( )
 
